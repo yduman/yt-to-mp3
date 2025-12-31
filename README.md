@@ -1,33 +1,58 @@
 # yt-to-mp3
 
-Read a list of YouTube URLs from a text file, then use goroutines to concurrently download and convert each video to MP3. Store all resulting MP3 files in a designated output folder.
+Go CLI tools for downloading YouTube videos and converting them to MP3 using concurrent downloads.
 
 ## Requirements
 
 - [`ffmpeg`](https://www.ffmpeg.org/)
 - [`yt-dlp`](https://github.com/yt-dlp/yt-dlp)
 
-The input file is expected to have one link for each line. Did not test playlist links.
+## Build
 
-```txt
-<link 1>
-<link 2>
-<link 3>
-...
+```console
+go build -o yt2mp3 ./cmd/yt2mp3
+go build -o yt2mp3-playlist ./cmd/yt2mp3-playlist
 ```
 
 ## Usage
 
-Build the binary with Go
+### Batch Mode (`yt2mp3`)
+
+Download multiple videos from a text file containing URLs (one per line).
 
 ```console
-cd cmd && go build -o yt2mp3
+./yt2mp3 <urls-file> <output-dir> [concurrency]
 ```
 
-Run the binary
+**Example:**
+```console
+./yt2mp3 links.txt ./music 5
+```
+
+**Input file format:**
+```txt
+https://www.youtube.com/watch?v=VIDEO_ID_1
+https://www.youtube.com/watch?v=VIDEO_ID_2
+https://www.youtube.com/watch?v=VIDEO_ID_3
+```
+
+### Playlist Mode (`yt2mp3-playlist`)
+
+Download all videos from a YouTube playlist.
 
 ```console
-./yt2mp3 <filepath to urls> <output path> [concurrency]
+./yt2mp3-playlist <playlist-url> <output-dir> [concurrency]
 ```
 
-`concurrency` is by default `10`. It controls how many downloads to run in parallel. The higher the number, the more speed up but also more network/CPU usage.
+**Example:**
+```console
+./yt2mp3-playlist "https://www.youtube.com/playlist?list=PLxxxxx" ./music 5
+```
+
+## Options
+
+| Argument | Description | Default |
+|----------|-------------|---------|
+| `concurrency` | Number of parallel downloads | 10 |
+
+Higher concurrency increases speed but also network/CPU usage.

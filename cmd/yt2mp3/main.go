@@ -1,14 +1,14 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strconv"
 	"sync"
+
+	"github.com/yduman/yt-to-mp3/internal/downloader"
 )
 
 func main() {
@@ -27,7 +27,7 @@ func main() {
 		}
 	}
 
-	urls, err := readLinks(filePath)
+	urls, err := downloader.ReadLinks(filePath)
 	if err != nil {
 		log.Fatalf("Failed to read file: %v\n", err)
 	}
@@ -45,9 +45,9 @@ func main() {
 
 		go func(u string) {
 			defer wg.Done()
-			defer func() { <-sem }() // release slot when done
+			defer func() { <-sem }()
 
-			if err := toMP3(u, out); err != nil {
+			if err := downloader.ToMP3(u, out); err != nil {
 				log.Printf("Error downloading %s: %v\n", u, err)
 			}
 		}(url)
@@ -55,37 +55,4 @@ func main() {
 
 	wg.Wait()
 	fmt.Println("All links done.")
-}
-
-func toMP3(url, outDir string) error {
-	// yt-dlp --extract-audio --audio-format mp3 -o <outputDir>/%(title)s.%(ext)s <URL>
-	cmd := exec.Command("yt-dlp", "--extract-audio", "--audio-format", "mp3", "-o", filepath.Join(outDir, "%(title)s.%(ext)s"), url)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
-}
-
-func readLinks(path string) ([]string, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-
-	defer f.Close()
-
-	var urls []string
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if line == "" {
-			continue
-		}
-		urls = append(urls, line)
-	}
-
-	if err := scanner.Err(); err != nil {
-		return nil, err
-	}
-
-	return urls, nil
 }
